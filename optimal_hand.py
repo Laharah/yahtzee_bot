@@ -23,7 +23,7 @@ def roll(hand, keep_mask=None):
     hand = list(itertools.compress(hand, keep_mask))
     for d in range(5 - len(hand)):
         hand.append(random.randrange(1, 7))
-    return tuple(hand)
+    return tuple(sorted(hand))
 
 
 def score(hand, category):
