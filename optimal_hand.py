@@ -83,3 +83,10 @@ def score(hand, category):
             return 0
         else:
             return 240 if hand[0] == 6 else 200
+
+
+def possible_hands(hand, mask):
+    hand = tuple(itertools.compress(hand, mask))
+    possible_rolls = itertools.combinations_with_replacement(range(1, 7), 5 - len(hand))
+    for r in possible_rolls:
+        yield tuple(sorted(hand + r))

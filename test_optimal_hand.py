@@ -78,3 +78,24 @@ def test_score_five_of_a_kind():
     assert optimal_hand.score((2, 2, 2, 2, 6), "Five of a Kind") == 0
     assert optimal_hand.score((2, 2, 2, 2, 2), "Five of a Kind") == 200
     assert optimal_hand.score((6, 6, 6, 6, 6), "Five of a Kind") == 240
+
+
+def test_possible_hands():
+    pos_hands = optimal_hand.possible_hands
+    assert list(pos_hands((2, 2, 2, 2, 2), (1, 1, 1, 1, 1))) == [(2, 2, 2, 2, 2)]
+
+    pos = {
+        (1, 2, 2, 2, 2),
+        (2, 2, 2, 2, 2),
+        (2, 2, 2, 2, 3),
+        (2, 2, 2, 2, 4),
+        (2, 2, 2, 2, 5),
+        (2, 2, 2, 2, 6),
+    }
+    assert set(pos_hands((2, 2, 2, 2, 2), (1, 1, 1, 1, 0))) == pos
+    assert len(list(pos_hands((2, 2, 2, 2, 2), (0, 0, 0, 0, 0)))) == 252
+
+
+def test_possible_hands_sort():
+    pos_hands = optimal_hand.possible_hands
+    assert set(pos_hands((4, 2, 5, 1, 3), (1, 1, 1, 1, 1))) == {(1, 2, 3, 4, 5)}
