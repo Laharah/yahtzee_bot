@@ -2,6 +2,13 @@ import pytest
 import optimal_hand
 
 
+def test_state():
+    """test state constructor interface"""
+    s = optimal_hand.State((1,1,1,1,1), 3)
+    assert s.hand == (1,1,1,1,1)
+    assert s.rolls == 3
+
+
 def test_roll():
     optimal_hand.random.seed(0)
     assert optimal_hand.roll(
