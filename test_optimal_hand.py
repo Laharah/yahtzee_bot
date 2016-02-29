@@ -7,9 +7,10 @@ import optimal_hand
 
 def test_state():
     """test state constructor interface"""
-    s = optimal_hand.State((1, 1, 1, 1, 1), 3)
+    s = optimal_hand.State((1, 1, 1, 1, 1), 3, 6)
     assert s.hand == (1, 1, 1, 1, 1)
     assert s.rolls == 3
+    assert s.score == 6
 
 
 @pytest.mark.xfail(sys.version_info[:2] != (3, 5), reason="different randon generator")
@@ -17,11 +18,11 @@ def test_roll():
     optimal_hand.random.seed(0)
     assert optimal_hand.roll(
         (1, 2, 3, 5, 5),
-        keep_mask=(0, 0, 0, 1, 1)) == (5, 5, 4, 4, 1)
+        keep_mask=(0, 0, 0, 1, 1)) == (1, 4, 4, 5, 5)
     assert optimal_hand.roll(
         (1, 2, 3, 4, 5),
         keep_mask=(1, 1, 1, 1, 1)) == (1, 2, 3, 4, 5)
-    assert optimal_hand.roll((1, 2, 3, 4, 5)) == (3, 5, 4, 4, 3)
+    assert optimal_hand.roll((1, 2, 3, 4, 5)) == (3, 3, 4, 4, 5)
 
 
 def test_score_invalid_category():
@@ -99,3 +100,28 @@ def test_possible_hands():
 def test_possible_hands_sort():
     pos_hands = optimal_hand.possible_hands
     assert set(pos_hands((4, 2, 5, 1, 3), (1, 1, 1, 1, 1))) == {(1, 2, 3, 4, 5)}
+
+
+def test_get_actions():
+    state = optimal_hand.State((1, 1, 1, 1, 1), 2, 0)
+    assert optimal_hand.get_actions(
+        state) == optimal_hand.DICE_MASKS | optimal_hand.SCORE_CATEGORIES
+    state = optimal_hand.State((1, 1, 1, 1, 1), 0, 0)
+    assert optimal_hand.get_actions(state) == optimal_hand.SCORE_CATEGORIES
+
+
+def test_do():
+    State = optimal_hand.State
+    state = State((1, 1, 1, 1, 1), 0, 0)
+    assert optimal_hand.do(state, "Five of a Kind") == State((1, 1, 1, 1, 1), 0, 200)
+    assert optimal_hand.do(state, "One Pair") == State((1, 1, 1, 1, 1), 0, 2)
+    assert optimal_hand.do(state, "Straight") == State((1, 1, 1, 1, 1), 0, 0)
+    state1 = state
+    state = State((1, 1, 1, 1, 1), 1, 0)
+    next_hand = (1, 1, 1, 3, 3)
+    assert optimal_hand.do(state,
+                           (1, 1, 1, 0, 0),
+                           next_hand=next_hand) == State(next_hand, 0, 0)
+
+    with pytest.raises(ValueError):
+        optimal_hand.do(state1, (0,0,0,0,0))

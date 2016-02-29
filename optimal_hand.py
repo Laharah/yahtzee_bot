@@ -4,9 +4,9 @@ from collections import namedtuple, Counter
 
 random.seed(0)
 
-State = namedtuple("State", 'hand, rolls')
+State = namedtuple("State", 'hand, rolls, score')
 #  every dice combination for re-roll is represented as a mask in 0-31 in binary
-DICE_MASKS = [[int(i) for i in '{:>05}'.format(bin(n)[2:])] for n in range(31)]
+DICE_MASKS = {tuple(int(i) for i in '{:>05}'.format(bin(n)[2:])) for n in range(31)}
 SCORE_CATEGORIES = {
     'One Pair',
     'Two Pair',
@@ -90,3 +90,23 @@ def possible_hands(hand, mask):
     possible_rolls = itertools.combinations_with_replacement(range(1, 7), 5 - len(hand))
     for r in possible_rolls:
         yield tuple(sorted(hand + r))
+
+
+def get_actions(state):
+    if state.rolls:
+        return DICE_MASKS | SCORE_CATEGORIES
+    else:
+        return SCORE_CATEGORIES
+
+def do(state, action, next_hand=None):
+    if action in SCORE_CATEGORIES:
+        return State(state.hand, state.rolls, score(state.hand, action))
+
+    rolls = state.rolls - 1
+    if rolls < 0:
+        raise ValueError("out of rolls, cannot re-roll")
+    if next_hand:
+        hand = next_hand
+    else:
+        hand = roll(state.hand, keep_mask=action)
+    return State(hand, rolls, state.score)
