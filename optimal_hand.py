@@ -1,6 +1,23 @@
 import random
+import math
 import itertools
+from functools import wraps
 from collections import namedtuple, Counter
+
+def memo(func):
+    """A quick and dirty caching function"""
+    memo.cache = cache = {}
+    @wraps(func)
+    def wrapper(*args):
+        try:
+            return cache[args]
+        except KeyError:
+            cache[args] = result = func(*args)
+            return result
+        except TypeError:
+            return func(*args)
+    return wrapper
+
 
 random.seed(0)
 
@@ -19,6 +36,8 @@ SCORE_CATEGORIES = {
 
 
 def roll(hand, keep_mask=None):
+    if not hand:
+        hand = tuple()
     keep_mask = (0, 0, 0, 0, 0) if not keep_mask else keep_mask
     hand = list(itertools.compress(hand, keep_mask))
     for d in range(5 - len(hand)):
@@ -91,6 +110,9 @@ def possible_hands(hand, mask):
     for r in possible_rolls:
         yield tuple(sorted(hand + r))
 
+def num_possible_hands(dice):
+    return math.factorial(6+dice-1)/(math.factorial(dice)*120)
+
 
 def get_actions(state):
     if state.rolls:
@@ -110,3 +132,39 @@ def do(state, action, next_hand=None):
     else:
         hand = roll(state.hand, keep_mask=action)
     return State(hand, rolls, state.score)
+
+@memo
+def utility(state):
+    """The value of being in a certain state"""
+    if state.score:
+        return state.score
+
+    return max(quality(state, action) for action in get_actions(state))
+
+def quality(state, action):
+    """The value of taking a certain action in a given state"""
+    if action in SCORE_CATEGORIES:
+        return score(state.hand, action)
+
+    # if the value relies on chance, average the utilities of the possible states together
+    num_dice = 5 - sum(action)
+    total_possible = num_possible_hands(num_dice)
+    return sum(utility(do(state, action, next_hand=h))
+               for h in possible_hands(state.hand, action)) / total_possible
+
+
+def best_action(state):
+    """returns the best action for a given state"""
+    return max((a for a in get_actions(state)), key=lambda a: quality(state, a))
+
+
+if __name__ == '__main__':
+    random.seed()
+    state = State(roll(None), 2, 0)
+    action = None
+    while not isinstance(action, str):
+        print(state)
+        action = best_action(state)
+        print(action)
+        state = do(state, action)
+    print('Score: {}'.format(state.score))

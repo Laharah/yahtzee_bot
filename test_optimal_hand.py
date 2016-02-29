@@ -124,4 +124,27 @@ def test_do():
                            next_hand=next_hand) == State(next_hand, 0, 0)
 
     with pytest.raises(ValueError):
-        optimal_hand.do(state1, (0,0,0,0,0))
+        optimal_hand.do(state1, (0, 0, 0, 0, 0))
+
+
+def test_num_possible_hands():
+    nph = optimal_hand.num_possible_hands
+    assert nph(1) == 6
+    assert nph(5) == 252
+    assert nph(2) == 21
+
+
+def test_utility():
+    u = optimal_hand.utility
+    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
+    assert u(state1) == 50
+    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
+    assert u(state2) > u(state1)
+
+
+def test_best_action():
+    best = optimal_hand.best_action
+    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
+    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
+    assert best(state1) == "Four of a Kind"
+    assert best(state2) == (1, 1, 1, 1, 0)
