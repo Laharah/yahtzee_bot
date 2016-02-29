@@ -6,13 +6,13 @@ from collections import namedtuple, Counter
 
 def memo(func):
     """A quick and dirty caching function"""
-    memo.cache = cache = {}
+    memo.cache = {}
     @wraps(func)
     def wrapper(*args):
         try:
-            return cache[args]
+            return memo.cache[args]
         except KeyError:
-            cache[args] = result = func(*args)
+            memo.cache[args] = result = func(*args)
             return result
         except TypeError:
             return func(*args)
@@ -159,8 +159,13 @@ def best_action(state):
 
 
 if __name__ == '__main__':
+    import os
+    import pickle
+    if os.path.exists("util_cache.pickle"):
+        with open("util_cache.pickle", 'rb') as p:
+            memo.cache = pickle.load(p)
     random.seed()
-    state = State(roll(None), 2, 0)
+    state = State(roll(None), 5, 0)
     action = None
     while not isinstance(action, str):
         print(state)
