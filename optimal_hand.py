@@ -31,6 +31,7 @@ SCORE_CATEGORIES = {
     'One Pair',
     'Two Pair',
     'Three of a Kind',
+    'Flush',
     'Straight',
     'Full House',
     'Four of a Kind',
@@ -76,6 +77,13 @@ def score(hand, category):
             return 0
         else:
             return 8 if value == 6 else 6
+
+    if category == 'Flush':
+        s = set(hand)
+        if s.issubset({1,3,6}) or s.issubset({2,4,5}):
+            return 15
+        else:
+            return 0
 
     if category == 'Straight':
         start = min(hand)
@@ -179,7 +187,7 @@ if __name__ == '__main__':
         except pickle.UnpicklingError:
             pass
     random.seed()
-    state = State(roll(None), 3, 0)
+    state = State(roll(None), 2, 0)
     action = None
     while not isinstance(action, str):
         print(state)

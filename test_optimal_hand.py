@@ -51,6 +51,14 @@ def test_score_three_of_a_kind():
     assert optimal_hand.score((2, 6, 6, 6, 6), "Three of a Kind") == 8
     assert optimal_hand.score((1, 2, 3, 4, 5), "Three of a Kind") == 0
 
+def test_score_flush():
+    assert optimal_hand.score((1,1,3,3,6), "Flush") == 15
+    assert optimal_hand.score((1,1,3,3,3), "Flush") == 15
+    assert optimal_hand.score((3,3,3,3,3), "Flush") == 15
+    assert optimal_hand.score((2,2,2,2,2), "Flush") == 15
+    assert optimal_hand.score((2,4,4,5,5), "Flush") == 15
+    assert optimal_hand.score((2,4,3,5,5), "Flush") == 0
+
 
 def test_score_straight():
     assert optimal_hand.score((1, 2, 3, 4, 5), "Straight") == 25
