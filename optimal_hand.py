@@ -24,10 +24,11 @@ def memo(func):
 
 random.seed(0)
 
-State = namedtuple("State", 'hand, rolls, score')
+State = namedtuple("State", 'hand, rolls, score, turn')
+
 #  every dice combination for re-roll is represented as a mask in 0-31 in binary
 DICE_MASKS = {tuple(int(i) for i in '{:>05}'.format(bin(n)[2:])) for n in range(31)}
-SCORE_CATEGORIES = {
+SCORE_INDEX = [
     'One Pair',
     'Two Pair',
     'Three of a Kind',
@@ -36,8 +37,9 @@ SCORE_CATEGORIES = {
     'Full House',
     'Four of a Kind',
     'Five of a Kind',
-}
+]
 
+SCORE_CATEGORIES = set(SCORE_INDEX)
 
 def roll(hand, keep_mask=None):
     if not hand:
@@ -116,6 +118,8 @@ def score(hand, category):
 
 
 def possible_hands(hand, mask):
+    if hand == (0,0,0,0,0):
+        mask = hand
     hand = tuple(itertools.compress(hand, mask))
     possible_rolls = itertools.combinations_with_replacement(range(1, 7), 5 - len(hand))
     for r in possible_rolls:
@@ -127,6 +131,8 @@ def num_possible_hands(dice):
 
 
 def get_actions(state):
+    if state.hand == (0,0,0,0,0):
+        return {(0,0,0,0,0)}
     if state.rolls:
         return DICE_MASKS | SCORE_CATEGORIES
     else:
@@ -135,7 +141,10 @@ def get_actions(state):
 
 def do(state, action, next_hand=None):
     if action in SCORE_CATEGORIES:
-        return State(state.hand, state.rolls, score(state.hand, action))
+        new_score = []
+        for name, s in zip(SCORE_INDEX, state.score):
+            new_score.append(s if name != action else score(state.hand, action))
+        return State((0,0,0,0,0), 3, tuple(new_score), state.turn - 1)
 
     rolls = state.rolls - 1
     if rolls < 0:
@@ -144,14 +153,14 @@ def do(state, action, next_hand=None):
         hand = next_hand
     else:
         hand = roll(state.hand, keep_mask=action)
-    return State(hand, rolls, state.score)
+    return State(hand, rolls, state.score, state.turn)
 
 
 @memo
 def utility(state):
     """The value of being in a certain state"""
-    if state.score:
-        return state.score
+    if state.turn == 0:
+        return sum(state.score)
 
     return max(quality(state, action) for action in get_actions(state))
 
@@ -159,7 +168,7 @@ def utility(state):
 def quality(state, action):
     """The value of taking a certain action in a given state"""
     if action in SCORE_CATEGORIES:
-        return score(state.hand, action)
+        return utility(do(state, action))
 
     # if the value relies on roll, average the utilities of the possible states together
     num_dice = 5 - sum(action)
@@ -187,13 +196,15 @@ if __name__ == '__main__':
         except pickle.UnpicklingError:
             pass
     random.seed()
-    state = State(roll(None), 2, 0)
+    state = State(roll(None), 2, (0,0,0,0,0,0,0,0), 4)
     action = None
-    while not isinstance(action, str):
+    while state.turn:
         print(state)
         action = best_action(state)
         print(action)
         state = do(state, action)
-    print('Score: {}'.format(state.score))
+    print(state)
+    print('Score: {}'.format(sum(state.score)))
+    print("mem_chache: {} items".format(len(memo.cache)))
     with open("util_cache.pickle", 'wb') as p:
         pickle.dump(memo.cache, p)

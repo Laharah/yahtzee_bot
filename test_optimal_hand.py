@@ -7,10 +7,11 @@ import optimal_hand
 
 def test_state():
     """test state constructor interface"""
-    s = optimal_hand.State((1, 1, 1, 1, 1), 3, 6)
+    s = optimal_hand.State((1, 1, 1, 1, 1), 3, (0, 6, 0, 0, 0, 0, 0, 0), 7)
     assert s.hand == (1, 1, 1, 1, 1)
     assert s.rolls == 3
-    assert s.score == 6
+    assert s.score == (0, 6, 0, 0, 0, 0, 0, 0)
+    assert s.turn == 7
 
 
 @pytest.mark.xfail(sys.version_info[:2] != (3, 5), reason="different randon generator")
@@ -51,13 +52,14 @@ def test_score_three_of_a_kind():
     assert optimal_hand.score((2, 6, 6, 6, 6), "Three of a Kind") == 8
     assert optimal_hand.score((1, 2, 3, 4, 5), "Three of a Kind") == 0
 
+
 def test_score_flush():
-    assert optimal_hand.score((1,1,3,3,6), "Flush") == 15
-    assert optimal_hand.score((1,1,3,3,3), "Flush") == 15
-    assert optimal_hand.score((3,3,3,3,3), "Flush") == 15
-    assert optimal_hand.score((2,2,2,2,2), "Flush") == 15
-    assert optimal_hand.score((2,4,4,5,5), "Flush") == 15
-    assert optimal_hand.score((2,4,3,5,5), "Flush") == 0
+    assert optimal_hand.score((1, 1, 3, 3, 6), "Flush") == 15
+    assert optimal_hand.score((1, 1, 3, 3, 3), "Flush") == 15
+    assert optimal_hand.score((3, 3, 3, 3, 3), "Flush") == 15
+    assert optimal_hand.score((2, 2, 2, 2, 2), "Flush") == 15
+    assert optimal_hand.score((2, 4, 4, 5, 5), "Flush") == 15
+    assert optimal_hand.score((2, 4, 3, 5, 5), "Flush") == 0
 
 
 def test_score_straight():
@@ -111,25 +113,25 @@ def test_possible_hands_sort():
 
 
 def test_get_actions():
-    state = optimal_hand.State((1, 1, 1, 1, 1), 2, 0)
+    state = optimal_hand.State((1, 1, 1, 1, 1), 2, (0,), 6)
     assert optimal_hand.get_actions(
         state) == optimal_hand.DICE_MASKS | optimal_hand.SCORE_CATEGORIES
-    state = optimal_hand.State((1, 1, 1, 1, 1), 0, 0)
+    state = optimal_hand.State((1, 1, 1, 1, 1), 0, (0,), 6)
     assert optimal_hand.get_actions(state) == optimal_hand.SCORE_CATEGORIES
 
 
 def test_do():
     State = optimal_hand.State
-    state = State((1, 1, 1, 1, 1), 0, 0)
-    assert optimal_hand.do(state, "Five of a Kind") == State((1, 1, 1, 1, 1), 0, 200)
-    assert optimal_hand.do(state, "One Pair") == State((1, 1, 1, 1, 1), 0, 2)
-    assert optimal_hand.do(state, "Straight") == State((1, 1, 1, 1, 1), 0, 0)
+    state = State((1, 1, 1, 1, 1), 0, (0, 0,0,0,0,0,0,0), 1)
+    assert optimal_hand.do(state, "Five of a Kind") == state._replace(hand=(0,0,0,0,0), rolls=3, score=(0,0,0,0,0,0,0,200), turn=0)
+    assert optimal_hand.do(state, "One Pair") == state._replace(hand=(0,0,0,0,0), rolls=3, score=(2,0,0,0,0,0,0,0), turn=0)
+    assert optimal_hand.do(state, "Straight") == state._replace(hand=(0,0,0,0,0), rolls=3, score=(0,0,0,0,0,0,0,0), turn=0)
     state1 = state
-    state = State((1, 1, 1, 1, 1), 1, 0)
+    state = State((1, 1, 1, 1, 1), 1, (0,0,0,0,0,0,0,0), 1)
     next_hand = (1, 1, 1, 3, 3)
     assert optimal_hand.do(state,
                            (1, 1, 1, 0, 0),
-                           next_hand=next_hand) == State(next_hand, 0, 0)
+                           next_hand=next_hand) == state._replace(hand=next_hand, rolls=0)
 
     with pytest.raises(ValueError):
         optimal_hand.do(state1, (0, 0, 0, 0, 0))
@@ -144,15 +146,15 @@ def test_num_possible_hands():
 
 def test_utility():
     u = optimal_hand.utility
-    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
+    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, (0,0,0,0,0,0,0,0), 1)
     assert u(state1) == 50
-    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
+    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, (0,0,0,0,0,0,0,0), 1)
     assert u(state2) > u(state1)
 
 
 def test_best_action():
     best = optimal_hand.best_action
-    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
-    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
+    state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, (0,0,0,0,0,0,0,0), 1)
+    state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, (0,0,0,0,0,0,0,0), 1)
     assert best(state1) == "Four of a Kind"
     assert best(state2) == (1, 1, 1, 1, 0)
