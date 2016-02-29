@@ -172,18 +172,14 @@ if __name__ == '__main__':
     import pickle
     import sys
     args = sys.argv[1:]
-    print(args)
-    re_pickle = False
     if os.path.exists("util_cache.pickle") and '--clear' not in args:
         try:
             with open("util_cache.pickle", 'rb') as p:
                 memo.cache = pickle.load(p)
         except pickle.UnpicklingError:
-            re_pickle = True
-    else:
-        re_pickle = True
+            pass
     random.seed()
-    state = State(roll(None), 5, 0)
+    state = State(roll(None), 3, 0)
     action = None
     while not isinstance(action, str):
         print(state)
@@ -191,6 +187,5 @@ if __name__ == '__main__':
         print(action)
         state = do(state, action)
     print('Score: {}'.format(state.score))
-    if re_pickle:
-        with open("util_cache.pickle", 'wb') as p:
-            pickle.dump(memo.cache, p)
+    with open("util_cache.pickle", 'wb') as p:
+        pickle.dump(memo.cache, p)
