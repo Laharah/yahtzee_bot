@@ -4,9 +4,11 @@ import itertools
 from functools import wraps
 from collections import namedtuple, Counter
 
+
 def memo(func):
     """A quick and dirty caching function"""
     memo.cache = {}
+
     @wraps(func)
     def wrapper(*args):
         try:
@@ -16,6 +18,7 @@ def memo(func):
             return result
         except TypeError:
             return func(*args)
+
     return wrapper
 
 
@@ -110,8 +113,9 @@ def possible_hands(hand, mask):
     for r in possible_rolls:
         yield tuple(sorted(hand + r))
 
+
 def num_possible_hands(dice):
-    return math.factorial(6+dice-1)/(math.factorial(dice)*120)
+    return math.factorial(6 + dice - 1) / (math.factorial(dice) * 120)
 
 
 def get_actions(state):
@@ -119,6 +123,7 @@ def get_actions(state):
         return DICE_MASKS | SCORE_CATEGORIES
     else:
         return SCORE_CATEGORIES
+
 
 def do(state, action, next_hand=None):
     if action in SCORE_CATEGORIES:
@@ -133,6 +138,7 @@ def do(state, action, next_hand=None):
         hand = roll(state.hand, keep_mask=action)
     return State(hand, rolls, state.score)
 
+
 @memo
 def utility(state):
     """The value of being in a certain state"""
@@ -141,15 +147,18 @@ def utility(state):
 
     return max(quality(state, action) for action in get_actions(state))
 
+
 def quality(state, action):
     """The value of taking a certain action in a given state"""
     if action in SCORE_CATEGORIES:
         return score(state.hand, action)
 
-    # if the value relies on chance, average the utilities of the possible states together
+    # if the value relies on roll, average the utilities of the possible states together
     num_dice = 5 - sum(action)
     total_possible = num_possible_hands(num_dice)
-    return sum(utility(do(state, action, next_hand=h))
+    return sum(utility(do(state,
+                          action,
+                          next_hand=h))
                for h in possible_hands(state.hand, action)) / total_possible
 
 
@@ -161,9 +170,18 @@ def best_action(state):
 if __name__ == '__main__':
     import os
     import pickle
-    if os.path.exists("util_cache.pickle"):
-        with open("util_cache.pickle", 'rb') as p:
-            memo.cache = pickle.load(p)
+    import sys
+    args = sys.argv[1:]
+    print(args)
+    re_pickle = False
+    if os.path.exists("util_cache.pickle") and '--clear' not in args:
+        try:
+            with open("util_cache.pickle", 'rb') as p:
+                memo.cache = pickle.load(p)
+        except pickle.UnpicklingError:
+            re_pickle = True
+    else:
+        re_pickle = True
     random.seed()
     state = State(roll(None), 5, 0)
     action = None
@@ -173,3 +191,6 @@ if __name__ == '__main__':
         print(action)
         state = do(state, action)
     print('Score: {}'.format(state.score))
+    if re_pickle:
+        with open("util_cache.pickle", 'wb') as p:
+            pickle.dump(memo.cache, p)
