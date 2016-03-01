@@ -88,6 +88,13 @@ def test_score_five_of_a_kind():
     assert optimal_hand.score((2, 2, 2, 2, 2), "Five of a Kind") == 200
     assert optimal_hand.score((6, 6, 6, 6, 6), "Five of a Kind") == 240
 
+def test_adjusted_score_function():
+    board = (0,0,0,0,0,0,0,200)
+    score_func = optimal_hand.adjusted_score_function(board)
+    assert score_func((6,6,6,6,6), "Five of a Kind") == 40
+    assert score_func((5,5,5,5,5), "Five of a Kind") == 0
+    assert score_func((1,2,3,4,5), "Five of a Kind") == -200
+
 
 def test_possible_hands():
     pos_hands = optimal_hand.possible_hands
@@ -143,16 +150,20 @@ def test_num_possible_hands():
 
 
 def test_utility():
+    score_func = optimal_hand.score
     u = optimal_hand.utility
     state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
-    assert u(state1) == 50
+    assert u(state1, score_func) == 50
     state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
-    assert u(state2) > u(state1)
+    assert u(state2, score_func) > u(state1, score_func)
 
 
 def test_best_action():
     best = optimal_hand.best_action
     state1 = optimal_hand.State((1, 1, 1, 1, 2), 0, 0)
     state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
-    assert best(state1) == "Four of a Kind"
-    assert best(state2) == (1, 1, 1, 1, 0)
+    state3 = optimal_hand.State((1, 1, 1, 1, 1), 0, 0)
+    score_board = (0,0,0,0,0,0,0,200)
+    assert best(state1, score_board) == "Four of a Kind"
+    assert best(state2, score_board) == (1, 1, 1, 1, 0)
+    assert best(state3, score_board) == "Four of a Kind"
