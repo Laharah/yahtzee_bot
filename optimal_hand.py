@@ -189,14 +189,17 @@ if __name__ == '__main__':
     import pickle
     import sys
     args = sys.argv[1:]
-    if os.path.exists("util_cache.pickle") and '--clear' not in args:
+    if os.path.exists("util_cache.dict") and '--clear' not in args:
         try:
-            with open("util_cache.pickle", 'rb') as p:
-                memo.cache = pickle.load(p)
+            with open("util_cache.dict", 'r') as p:
+                for line in p:
+                    state, util = line.split(':')
+                    state, util = eval(state), float(util)
+                    memo.cache[state] = util
         except pickle.UnpicklingError:
             pass
     random.seed()
-    state = State(roll(None), 2, (0,0,0,0,0,0,0,0), 4)
+    state = State(roll(None), 2, (0,0,0,0,0,0,0,0), 2)
     action = None
     while state.turn:
         print(state)
@@ -206,5 +209,6 @@ if __name__ == '__main__':
     print(state)
     print('Score: {}'.format(sum(state.score)))
     print("mem_chache: {} items".format(len(memo.cache)))
-    with open("util_cache.pickle", 'wb') as p:
-        pickle.dump(memo.cache, p)
+    with open("util_cache.dict", 'w') as p:
+        for state, util in memo.cache.items():
+            p.write('{}:{}\n'.format(repr(state), util))

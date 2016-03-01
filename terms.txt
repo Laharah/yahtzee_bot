@@ -12,3 +12,6 @@ actions(state)
 
 utility: the value of a particular state
 quality: the value of taking a particular action from a particular state
+
+direct: 133
+weighted1: 132.5
