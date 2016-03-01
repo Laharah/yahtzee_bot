@@ -56,6 +56,7 @@ def adjusted_score_function(score_board):
         return score
 
     assert len(score_board) == len(SCORE_INDEX)
+
     def _adjusted_score(hand, category):
         s = score(hand, category)
         s -= score_board[SCORE_INDEX.index(category)]
@@ -183,8 +184,7 @@ def quality(state, action, score_func):
         do(state,
            action,
            next_hand=h),
-           score_func)
-              for h in possible_hands(state.hand, action)) / total_possible
+        score_func) for h in possible_hands(state.hand, action)) / total_possible
 
 
 def best_action(state, score_board):
@@ -198,13 +198,14 @@ def best_action(state, score_board):
         memo.cache = {}
         best_action.previous_board = score_board
         best_action.score_func = adjusted_score_function(score_board)
-    return max((a for a in get_actions(state)),
-               key=lambda a: quality(state, a, best_action.score_func))
+    return max(
+        (a for a in get_actions(state)),
+        key=lambda a: quality(state, a, best_action.score_func))
 
 
 if __name__ == '__main__':
     random.seed()
-    score_board = (0,0,0,0,0,0,0,0)
+    score_board = (0, 0, 0, 0, 0, 0, 0, 0)
     turns = 8
     state = State(roll(None), 2, 0)
     while turns:
@@ -213,9 +214,8 @@ if __name__ == '__main__':
         print(action)
         state = do(state, action)
         if isinstance(action, str):
-            score_board = tuple(
-                s if cat!=action else state.score for s, cat in zip(score_board, SCORE_INDEX)
-            )
+            score_board = tuple(s if cat != action else state.score
+                                for s, cat in zip(score_board, SCORE_INDEX))
             print(score_board)
             state = State(roll(None), 2, 0)
             turns -= 1
