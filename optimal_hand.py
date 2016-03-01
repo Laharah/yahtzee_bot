@@ -60,7 +60,7 @@ def adjusted_score_function(score_board):
     def _adjusted_score(hand, category):
         s = score(hand, category)
         s -= score_board[SCORE_INDEX.index(category)]
-        s = s - 20 if s <= 0 else s  # extra penalty for non-score
+        s = s - 10 if s <= 0 else s  # extra penalty for non-score
         return s
 
     return _adjusted_score
