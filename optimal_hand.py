@@ -203,15 +203,12 @@ def best_action(state, score_board):
         (a for a in get_actions(state)),
         key=lambda a: quality(state, a, best_action.score_func))
 
-
-if __name__ == '__main__':
-    random.seed()
+def play_game(turns=8, strategy=best_action):
     score_board = (0, 0, 0, 0, 0, 0, 0, 0)
-    turns = 8
     state = State(roll(None), 2, 0)
     while turns:
         print(state)
-        action = best_action(state, score_board)
+        action = strategy(state, score_board)
         print(action)
         state = do(state, action)
         if isinstance(action, str):
@@ -222,3 +219,8 @@ if __name__ == '__main__':
             turns -= 1
 
     print("total_score: {}".format(sum(score_board)))
+    return sum(score_board)
+
+if __name__ == '__main__':
+    random.seed()
+    play_game()
