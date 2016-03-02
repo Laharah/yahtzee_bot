@@ -40,15 +40,15 @@ SCORE_INDEX = [
 ]
 SCORE_CATEGORIES = set(SCORE_INDEX)
 PROBABILITES = {
-             'One Pair': 0.9722222222222222,
-             'Two Pair': 0.35714285714285715,
-             'Three of a Kind': 0.49603174603174605,
-             'Flush': 0.1626984126984127,
-             'Straight': 0.007936507936507936,
-             'Full House': 0.1388888888888889,
-             'Four of a Kind': 0.1388888888888889,
-             'Five of a Kind': 0.0198412698412698,
-             }
+    'One Pair': 0.9722222222222222,
+    'Two Pair': 0.35714285714285715,
+    'Three of a Kind': 0.49603174603174605,
+    'Flush': 0.1626984126984127,
+    'Straight': 0.007936507936507936,
+    'Full House': 0.1388888888888889,
+    'Four of a Kind': 0.1388888888888889,
+    'Five of a Kind': 0.0198412698412698,
+}
 
 
 def roll(hand, keep_mask=None):
@@ -71,10 +71,13 @@ def adjusted_score_function(score_board, turn):
 
     def _adjusted_score(hand, category):
         s = score(hand, category)  # get the base score of the hand
+
         #  if we've already scored in that category scoring in it again
         #  will overwrite the previous score, so it will be worth previous_score less
         s -= score_board[SCORE_INDEX.index(category)]
-        s = s - 10 if s <= 0 else s + (1/7)*((turn-1)/(2*PROBABILITES[category]))
+        #  complicated bit:
+        s = s - 10 if s <= 0 else s + (1 / 7) * ((turn - 1) /
+                                                 (2 * PROBABILITES[category]))
         return s
 
     return _adjusted_score
@@ -213,6 +216,7 @@ def quality(state, action, score_func):
 
 def best_action(state, score_board, turn):
     """returns the best action for a given state and scoreboard"""
+    # dirty caching of score funciton and managing the utility cache between turns
     try:
         if score_board != best_action.previous_board:
             best_action.previous_board = score_board
@@ -222,9 +226,11 @@ def best_action(state, score_board, turn):
         memo.cache = {}
         best_action.previous_board = score_board
         best_action.score_func = adjusted_score_function(score_board, turn)
+
     return max(
         (a for a in get_actions(state)),
         key=lambda a: quality(state, a, best_action.score_func))
+
 
 def play_game(turns=8, strategy=best_action, start_hand=None):
     score_board = (0, 0, 0, 0, 0, 0, 0, 0)
@@ -245,13 +251,13 @@ def play_game(turns=8, strategy=best_action, start_hand=None):
     print("total_score: {}".format(sum(score_board)))
     return sum(score_board)
 
+
 if __name__ == '__main__':
     random.seed(28)
-    # play_game()
+    play_game()
 
-
-    scores = []
-    for s in possible_hands((0,0,0,0,0), (0,0,0,0,0)):
-        scores.append(play_game(start_hand=s))
-
-    print(sum(scores)/len(scores))
+    # scores = []
+    # for s in possible_hands((0,0,0,0,0), (0,0,0,0,0)):
+    #     scores.append(play_game(start_hand=s))
+    #
+    # print(sum(scores)/len(scores))
