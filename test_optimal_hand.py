@@ -90,10 +90,10 @@ def test_score_five_of_a_kind():
 
 def test_adjusted_score_function():
     board = (0,0,0,0,0,0,0,200)
-    score_func = optimal_hand.adjusted_score_function(board)
+    score_func = optimal_hand.adjusted_score_function(board, 1)
     assert score_func((6,6,6,6,6), "Five of a Kind") == 40
-    assert score_func((5,5,5,5,5), "Five of a Kind") == 0
-    assert score_func((1,2,3,4,5), "Five of a Kind") == -200
+    assert score_func((5,5,5,5,5), "Five of a Kind") == -10
+    assert score_func((1,2,3,4,5), "Five of a Kind") == -210
 
 
 def test_possible_hands():
@@ -164,6 +164,6 @@ def test_best_action():
     state2 = optimal_hand.State((1, 1, 1, 1, 2), 1, 0)
     state3 = optimal_hand.State((1, 1, 1, 1, 1), 0, 0)
     score_board = (0,0,0,0,0,0,0,200)
-    assert best(state1, score_board) == "Four of a Kind"
-    assert best(state2, score_board) == (1, 1, 1, 1, 0)
-    assert best(state3, score_board) == "Four of a Kind"
+    assert best(state1, score_board, 1) == "Four of a Kind"
+    assert best(state2, score_board, 1) == (1, 1, 1, 1, 0)
+    assert best(state3, score_board, 1) == "Four of a Kind"
