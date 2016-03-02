@@ -38,6 +38,16 @@ SCORE_INDEX = [
     'Five of a Kind',
 ]
 SCORE_CATEGORIES = set(SCORE_INDEX)
+PROBABILITES = {
+             'One Pair': 0.9722222222222222,
+             'Two Pair': 0.35714285714285715,
+             'Three of a Kind': 0.49603174603174605,
+             'Flush': 0.1626984126984127,
+             'Straight': 0.007936507936507936,
+             'Full House': 0.1388888888888889,
+             'Four of a Kind': 0.1388888888888889,
+             'Five of a Kind': 0.0198412698412698,
+             }
 
 
 def roll(hand, keep_mask=None):
@@ -50,17 +60,19 @@ def roll(hand, keep_mask=None):
     return tuple(sorted(hand))
 
 
-def adjusted_score_function(score_board):
+def adjusted_score_function(score_board, turn):
     """wraps the score function for dynamic adjustment based on current category utility"""
     if not score_board:
         return score
 
-    assert len(score_board) == len(SCORE_INDEX)
+    assert len(score_board) == len(SCORE_INDEX)  # prevents human error when testing
 
     def _adjusted_score(hand, category):
-        s = score(hand, category)
+        s = score(hand, category)  # get the base score of the hand
+        #  if we've already scored in that category scoring in it again
+        #  will overwrite the previous score, so it will be worth previous_score less
         s -= score_board[SCORE_INDEX.index(category)]
-        s = s - 10 if s <= 0 else s  # extra penalty for non-score
+        s = s - 10 if s <= 0 else s + (1/7)*((turn-1)/(2*PROBABILITES[category]))
         return s
 
     return _adjusted_score
@@ -188,27 +200,28 @@ def quality(state, action, score_func):
         score_func) for h in possible_hands(state.hand, action)) / total_possible
 
 
-def best_action(state, score_board):
+def best_action(state, score_board, turn):
     """returns the best action for a given state and scoreboard"""
     try:
         if score_board != best_action.previous_board:
             best_action.previous_board = score_board
             memo.cache = {}
-            best_action.score_func = adjusted_score_function(score_board)
+            best_action.score_func = adjusted_score_function(score_board, turn)
     except AttributeError:
         memo.cache = {}
         best_action.previous_board = score_board
-        best_action.score_func = adjusted_score_function(score_board)
+        best_action.score_func = adjusted_score_function(score_board, turn)
     return max(
         (a for a in get_actions(state)),
         key=lambda a: quality(state, a, best_action.score_func))
 
-def play_game(turns=8, strategy=best_action):
+def play_game(turns=8, strategy=best_action, start_hand=None):
     score_board = (0, 0, 0, 0, 0, 0, 0, 0)
-    state = State(roll(None), 2, 0)
+    start_hand = roll(None) if not start_hand else start_hand
+    state = State(roll(start_hand), 2, 0)
     while turns:
         print(state)
-        action = strategy(state, score_board)
+        action = strategy(state, score_board, turns)
         print(action)
         state = do(state, action)
         if isinstance(action, str):
@@ -222,5 +235,12 @@ def play_game(turns=8, strategy=best_action):
     return sum(score_board)
 
 if __name__ == '__main__':
-    random.seed()
-    play_game()
+    random.seed(28)
+    # play_game()
+
+
+    scores = []
+    for s in possible_hands((0,0,0,0,0), (0,0,0,0,0)):
+        scores.append(play_game(start_hand=s))
+
+    print(sum(scores)/len(scores))
