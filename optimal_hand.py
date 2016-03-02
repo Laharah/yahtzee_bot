@@ -25,6 +25,7 @@ def memo(func):
 random.seed(0)
 
 State = namedtuple("State", 'hand, rolls, score')
+
 #  every dice combination for re-roll is represented as a mask in 0-31 in binary
 DICE_MASKS = {tuple(int(i) for i in '{:>05}'.format(bin(n)[2:])) for n in range(31)}
 SCORE_INDEX = [
@@ -51,6 +52,7 @@ PROBABILITES = {
 
 
 def roll(hand, keep_mask=None):
+    """re-rolls dice not coverd by mask"""
     if not hand:
         hand = tuple()
     keep_mask = (0, 0, 0, 0, 0) if not keep_mask else keep_mask
@@ -79,6 +81,7 @@ def adjusted_score_function(score_board, turn):
 
 
 def score(hand, category):
+    """calculates the score of a hand given category. See http://www.checkio.org/mission/poker-dice/"""
     if category not in SCORE_CATEGORIES:
         raise ValueError("Invalid Category: {}".format(category))
 
@@ -145,6 +148,7 @@ def score(hand, category):
 
 
 def possible_hands(hand, mask):
+    """given a hand and a mask, generate all the possible new hands you could roll"""
     hand = tuple(itertools.compress(hand, mask))
     possible_rolls = itertools.combinations_with_replacement(range(1, 7), 5 - len(hand))
     for r in possible_rolls:
@@ -152,10 +156,12 @@ def possible_hands(hand, mask):
 
 
 def num_possible_hands(dice):
+    """calculates the number of possible hands after re-rolling x dice"""
     return math.factorial(6 + dice - 1) / (math.factorial(dice) * 120)
 
 
 def get_actions(state):
+    """return the possible actions from a give state"""
     if state.rolls:
         return DICE_MASKS | SCORE_CATEGORIES
     else:
@@ -163,6 +169,11 @@ def get_actions(state):
 
 
 def do(state, action, next_hand=None):
+    """
+    advances the game to the next state given an action.
+    Allows you to specify the next hand to sample possible states.
+    Action can be a score category or a dice mask
+    """
     if action in SCORE_CATEGORIES:
         return State(state.hand, state.rolls, score(state.hand, action))
 
@@ -186,18 +197,18 @@ def utility(state, score_func):
 
 
 def quality(state, action, score_func):
-    """The value of taking a certain action in a given state"""
+    """
+    The value of taking a certain action in a given state
+    Action can be a score category or a dice mask
+    """
     if action in SCORE_CATEGORIES:
         return score_func(state.hand, action)
 
     # if the value relies on roll, average the utilities of the possible states together
     num_dice = 5 - sum(action)
     total_possible = num_possible_hands(num_dice)
-    return sum(utility(
-        do(state,
-           action,
-           next_hand=h),
-        score_func) for h in possible_hands(state.hand, action)) / total_possible
+    return sum(utility(do(state, action, next_hand=h), score_func)
+        for h in possible_hands(state.hand, action)) / total_possible
 
 
 def best_action(state, score_board, turn):
