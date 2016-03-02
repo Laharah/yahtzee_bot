@@ -41,7 +41,9 @@ SCORE_INDEX = [
 
 SCORE_CATEGORIES = set(SCORE_INDEX)
 
+
 def roll(hand, keep_mask=None):
+    """re-rolls dice not coverd by mask"""
     if not hand:
         hand = tuple()
     keep_mask = (0, 0, 0, 0, 0) if not keep_mask else keep_mask
@@ -52,6 +54,7 @@ def roll(hand, keep_mask=None):
 
 
 def score(hand, category):
+    """calculates the score of a hand given category. See http://www.checkio.org/mission/poker-dice/"""
     if category not in SCORE_CATEGORIES:
         raise ValueError("Invalid Category: {}".format(category))
 
@@ -82,7 +85,7 @@ def score(hand, category):
 
     if category == 'Flush':
         s = set(hand)
-        if s.issubset({1,3,6}) or s.issubset({2,4,5}):
+        if s.issubset({1, 3, 6}) or s.issubset({2, 4, 5}):
             return 15
         else:
             return 0
@@ -118,7 +121,8 @@ def score(hand, category):
 
 
 def possible_hands(hand, mask):
-    if hand == (0,0,0,0,0):
+    """Given a hand and a mask, generate all possible hands you could roll"""
+    if hand == (0, 0, 0, 0, 0):
         mask = hand
     hand = tuple(itertools.compress(hand, mask))
     possible_rolls = itertools.combinations_with_replacement(range(1, 7), 5 - len(hand))
@@ -127,12 +131,15 @@ def possible_hands(hand, mask):
 
 
 def num_possible_hands(dice):
+    """calculates the number of possible hands after re-rolling x dice"""
     return math.factorial(6 + dice - 1) / (math.factorial(dice) * 120)
 
 
 def get_actions(state):
-    if state.hand == (0,0,0,0,0):
-        return {(0,0,0,0,0)}
+    """return the possible actions from a give state"""
+    if state.hand == (0, 0, 0, 0, 0):
+        return {(0, 0, 0, 0, 0)}
+
     if state.rolls:
         return DICE_MASKS | SCORE_CATEGORIES
     else:
@@ -140,11 +147,16 @@ def get_actions(state):
 
 
 def do(state, action, next_hand=None):
+    """
+    advances the game to the next state given an action.
+    Allows you to specify the next hand to sample possible states.
+    Action can be a score category or a dice mask
+    """
     if action in SCORE_CATEGORIES:
         new_score = []
         for name, s in zip(SCORE_INDEX, state.score):
             new_score.append(s if name != action else score(state.hand, action))
-        return State((0,0,0,0,0), 3, tuple(new_score), state.turn - 1)
+        return State((0, 0, 0, 0, 0), 3, tuple(new_score), state.turn - 1)
 
     rolls = state.rolls - 1
     if rolls < 0:
@@ -166,13 +178,17 @@ def utility(state):
 
 
 def quality(state, action):
-    """The value of taking a certain action in a given state"""
+    """
+    The value of taking a certain action in a given state
+    Action can be a score category or a dice mask
+    """
     if action in SCORE_CATEGORIES:
         return utility(do(state, action))
 
     # if the value relies on roll, average the utilities of the possible states together
     num_dice = 5 - sum(action)
     total_possible = num_possible_hands(num_dice)
+
     return sum(utility(do(state,
                           action,
                           next_hand=h))
@@ -199,7 +215,7 @@ if __name__ == '__main__':
         except pickle.UnpicklingError:
             pass
     random.seed()
-    state = State(roll(None), 2, (0,0,0,0,0,0,0,0), 2)
+    state = State(roll(None), 2, (0, 0, 0, 0, 0, 0, 0, 0), 2)
     action = None
     while state.turn:
         print(state)
